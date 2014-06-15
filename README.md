@@ -12,6 +12,7 @@ fusewos is initially developed and tested on CentOS 6.4 64-bit platform.  It sho
 
 The following contents in this readme assume CentOS 6.4 64-bit is the host operating system.
 
+
 [ C++ WOSLib 2.x ]
 
 C++ WOSLib shared library can be found in the WOS C++ Dev Kit which can be downloaded from WOS cluster admin WebGUI.  fusewos was tested with WOSLib version 2.2.2, but other versions shall work too.
@@ -23,7 +24,12 @@ Download, find and copy the C++ WOSLib shared library to /usr/lib64 directory.  
 
 [ FUSE Library ]
 
-Fuse library is needed for fusewos to run.  It can be installed in CentOS 6.4 with "yum install -y fuse-libs".  The FUSE library will be installed in directory /lib64 by yum.
+Fuse library is needed for fusewos to run.  It can be installed in CentOS 6.4 with:
+
+    yum install -y fuse-libs
+    
+The FUSE library will be installed in directory /lib64 by yum.
+
 
 [ Test if Needed Libraries are installed ]
 
@@ -53,19 +59,21 @@ There is only one binary executable to install, fusewos.  Recommend to copy it u
 
 Test Run
 --------
-1 Create a mount point for fusewos to mount the name space under it
+<1> Create a mount point for fusewos to mount the name space under it
 
 Here is an example to do so:
 
     mkdir /mnt/fusewos
 
-2 Create a directory in host file system tree to map it with the mount point
+
+<2> Create a directory in host file system tree to map it with the mount point
 
 This directory will hold all the stub file file system structure.  Here is an exmaple to do so:
 
     mkdir /gpfs0/fusewos
 
-3 Mount the file system
+
+<3> Mount the file system
 
 Run the following command to get the fusewos file system mounted:
 
@@ -93,9 +101,7 @@ Once the copy is done, file "services" will both show up in directory /mnt/fusew
 * when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
 
 * when you read back the file from directory /gpfs0/fusewos, you will get the stub file content, similar to the following:
-
     [root@localhost wosfs]# cat /gpfs0/fusewos/services 
-
     WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
 
 Colume 1: magic word "WOSWOS" specified in the command line.  Not used today.
