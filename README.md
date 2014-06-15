@@ -84,7 +84,7 @@ Note:
    - FUSE option "-s -f -o big_writes" are mandatory
    - "&" at the end of line is recommended to put it in back ground
    - The other options are self explained
-   - may see message "fuse: warning: library too old, some operations may not not work" pop up.  It's likely going to be running fine, though the binary was compiled with FUSE shared library version 2.9.3, which is newest as of June, 2014.
+   - may see message "fuse: warning: library too old, some operations may not not work" pops up.  It's likely going to be running fine, though the binary was compiled with FUSE shared library version 2.9.3, which is newest as of June, 2014.
 
 Here is an example to run the command:
 
@@ -96,7 +96,7 @@ Here is an example:
 
     cp /etc/services /mnt/fusewos
 
-Once the copy is done, file "services" will both show up in directory /mnt/fusewos and /gpfs0/fusewos.  The difference is:
+Once the copy is done, file "services" will show up in both directory /mnt/fusewos and /gpfs0/fusewos.  The difference is:
 
 * when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
 
