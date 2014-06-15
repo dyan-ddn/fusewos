@@ -82,7 +82,9 @@ Here is an example if all installed properly:
 
 Installation
 ------------
-There is only one binary executable to install, fusewos.  Recommend to copy it under directory /usr/local/bin.  Here is an example to do so:
+There is only one binary executable to install, fusewos.  You can pull it from the latest sub directory in releases directory.  
+
+Recommend to copy it under directory /usr/local/bin.  Here is an example to do so:
 
     cp /root/downloads/fusewos /usr/local/bin
 
