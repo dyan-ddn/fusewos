@@ -13,7 +13,7 @@ fusewos is initially developed and tested on CentOS 6.4 64-bit platform.  It sho
 The following contents in this readme assume CentOS 6.4 64-bit is the host operating system.
 
 
-**2. C++ WOSLib 2.x **
+**2. C++ WOSLib 2.x**
 
 C++ WOSLib shared library can be found in the WOS C++ Dev Kit which can be downloaded from WOS cluster admin WebGUI.  fusewos was tested with WOSLib version 2.2.2, but other versions shall work too.
 
@@ -22,7 +22,7 @@ Download, find and copy the C++ WOSLib shared library to /usr/lib64 directory.  
     cp -a /root/downloads/dist/lib64/libwos_cpp.so* /usr/lib64
 
 
-**3. FUSE Library **
+**3. FUSE Library**
 
 Fuse library is needed for fusewos to run.  It can be installed in CentOS 6.4 with:
 
@@ -31,7 +31,7 @@ Fuse library is needed for fusewos to run.  It can be installed in CentOS 6.4 wi
 The FUSE library will be installed in directory /lib64 by yum.
 
 
-**4. Test if Needed Libraries are installed **
+**4. Test if Needed Libraries are installed**
 
 Run the following command to see if the needed shared libraries are installed in the OS:
 ldd /path/to/the/fusewos
