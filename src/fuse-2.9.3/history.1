@@ -1,0 +1,35 @@
+    1  ls
+    2  pwd
+    3  mkdir downloads
+    4  cd downloads
+    5  ls
+    6  wget http://downloads.sourceforge.net/project/fuse/fuse-2.X/2.9.3/fuse-2.9.3.tar.gz?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Ffuse%2Ffiles%2Ffuse-2.X%2F2.9.3%2F&ts=1400114068&use_mirror=hivelocity
+    7  ls
+    8  mv fuse-2.9.3.tar.gz\?r\=http\:%2F%2Fsourceforge.net%2Fprojects%2Ffuse%2Ffiles%2Ffuse-2.X%2F2.9.3%2F fuse-2.9.3.tar.gz
+    9  ls
+   10  tar xf fuse-2.9.3.tar.gz 
+   11  ls
+   12  cd fuse-2.9.3
+   13  ls
+   14  ./configure
+   15  make
+   16  ls
+   17  make install
+   18  ls -l /usr/local/
+   19  su -
+   20  chmod -R 777 /usr/local
+   21  su -
+   22  make install
+   23  su -
+   24  make install
+   25  mkdir /usr/local/include/fuse
+   26  ls -l /
+   27  su -
+   28  make install
+   29  ls -l /usr/include/
+   30  make install
+   31  ls -l /usr/local/
+   32  su -
+   33  make install
+   34  su -
+   35  history > history.1

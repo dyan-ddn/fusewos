@@ -1,0 +1,37 @@
+autotool reset:
+--------------
+
+ 1075  aclocal
+ 1076  autoconf
+ 1077  automake -a -c
+ 1084  autoreconf --force --install
+ 1085  ./configure
+ 1086  make
+
+compile,link, and run:
+----------------------
+to compile/link:
+" # Makefile
+CC = gcc
+CPPFLAGS = -g -O2 -I../../include -I../../../include -D_FILE_OFFSET_BITS=64
+LDFLAGS = -L../../lib64 -L../../../../lib/.libs
+LIBS = -lwos_cpp
+
+all:    wos_b_demo wos_nb_demo fusewos
+
+#
+# wos_b_demo: a demo of the WOS blocking C++ api
+wos_b_demo: wos_b_demo.o
+        ${LINK.C} -o $@ $< ${LIBS}
+
+#
+# wos_nb_demo: a demo of the non-blocking WOS C++ api
+wos_nb_demo:    wos_nb_demo.o
+        ${LINK.C} -o $@ $< ${LIBS}
+
+fusewos:    fusewos.o
+        ${LINK.C} -o $@ $< ${LIBS} -lfuse
+"
+
+to make sure all needed libraries are in the path when running compiled/linked executables:
+export LD_LIBRARY_PATH=/home/dyan/downloads/fuse-2.9.3/lib/.libs/:/home/dyan/downloads/fuse-2.9.3/example/dist/lib64/:/usr/lib64

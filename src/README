@@ -1,1 +1,41 @@
-README
+This directory holds the files needed to compile and link fusewos.
+
+Here is the directory tree:
+
+.
+├── demo
+│   └── cpp
+│       ├── fusewos
+│       ├── fusewos.cpp
+│       ├── Makefile
+│       ├── wos_b_demo.cpp
+│       ├── wos_nb_demo.cpp
+├── fuse -> fuse-2.9.3
+├── fuse-2.9.3
+...
+├── include
+│   ├── boost
+└── lib64
+    ├── libboost_date_time.a
+    ├── libboost_date_time.so -> libboost_date_time.so.1.45.0
+...
+    └── libboost_wserialization.so.2 -> libboost_wserialization.so.1.45.0
+
+
+It's very similar to the directory layout of C++ WOSLib SDK Kit.
+
+What's missing in the directory tree are the header files and C++ library files from the SDK kit.
+You can download the SDK kit from WOS Core cluster webGUI and put those missing files in the correspondant place.
+To be more specific, here are the list files to pull from the C++ WOSLib SDK kit:
+├── include
+...
+│   ├── wos_cluster.hpp
+│   ├── wos_exception.hpp
+│   ├── wos_obj.hpp
+│   └── wos_policy.hpp
+└── lib64
+...
+    ├── libwos_cpp.so -> libwos_cpp.so.1
+    └── libwos_cpp.so.1
+
+
