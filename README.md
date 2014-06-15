@@ -121,7 +121,7 @@ Once the copy is done, file "services" will show up in both directory /mnt/fusew
     [root@localhost wosfs]# cat /gpfs0/fusewos/services 
     WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
 
-Colume 1: magic word "WOSWOS" specified in the command line.  Not used today.
+Colume 1: magic word "WOSWOS" specified in the command line
 
 Column 2: WOS OID
 
