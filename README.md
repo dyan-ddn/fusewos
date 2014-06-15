@@ -34,7 +34,8 @@ The FUSE library will be installed in directory /lib64 by yum.
 **4. Test if Needed Libraries are Installed**
 
 Run the following command to see if the needed shared libraries are installed in the OS:
-ldd /path/to/the/fusewos
+
+    ldd /path/to/the/fusewos
 
 Here is an example that shows both woslib and fuse libraries are missing in the shared library searching paths:
 
