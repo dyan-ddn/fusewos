@@ -18,11 +18,8 @@ C++ WOSLib shared library can be found in the WOS C++ Dev Kit which can be downl
 
 Download, find and copy the C++ WOSLib shared library to /usr/lib64 directory.  Here is an example to do so:
 
-"
+    cp -a /root/downloads/dist/lib64/libwos_cpp.so* /usr/lib64
 
-cp -a /root/downloads/dist/lib64/libwos_cpp.so* /usr/lib64
-
-"
 
 [ FUSE Library ]
 
@@ -35,9 +32,7 @@ ldd /path/to/the/fusewos
 
 Here is an example that shows both woslib and fuse libraries are missing in the shared library searching paths:
 
-"
-
-[root@localhost cpp]# ldd fusewos
+    [root@localhost cpp]# ldd fusewos
 
         linux-vdso.so.1 =>  (0x00007fffda5ff000)
 
@@ -57,7 +52,6 @@ Here is an example that shows both woslib and fuse libraries are missing in the 
 
         /lib64/ld-linux-x86-64.so.2 (0x00007ffdea856000)
 
-"
 
 Installation
 ------------
@@ -69,7 +63,7 @@ cp /root/downloads/fusewos /usr/local/bin
 
 Test Run
 --------
-Create a mount point for fusewos to mount the name space under it
+1. Create a mount point for fusewos to mount the name space under it
 
 Here is an example to do so:
 
@@ -85,7 +79,7 @@ This directory will hold all the stub file file system structure.  Here is an ex
 mkdir /gpfs0/fusewos
 "
 
-Mount the file system
+2. Mount the file system
 
 Run the following command to get the fusewos file system mounted:
 
