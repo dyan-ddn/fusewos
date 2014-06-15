@@ -1,7 +1,21 @@
 fusewos
 =======
 
-A Linux FUSE based file system layer for DDN's WOS object storage (ddn.com).
+A Linux FUSE based file system layer for DDN's WOS object storage (ddn.com).  
+
+fusewos stores a file's data body in WOS storage cluster, but leaves a stub file with meta data in the local directory tree.  WOS storage cluster is transparent to file system applications.
+
+fusewos seperates file system meta data from file body.  It is especially good for big data use cases.  This opens the door to optimize file IO by taking advantage of storage methods that are tuned for small data IO and big data IO.
+
+fusewos can work on top of local, clustered or network file systems, thanks to FUSE.
+
+fusewos comes with build-in file versioning.
+
+fusewos supports an option for directory tree backup.
+
+fusewos uses one inode for each file in most cases, which means for ext4 file system, that's 4KB disk usage per file by default.  One 4TB disk can store 1 Billion files.  1KB is most likely enough for fusewos though.  Easy disk usage calculation, no mystery here in sizing for storage needs.
+
+All conventional tools can be used with the meta data directory for searching, examination, backup, sync, and etc.
 
 Runtime Dependencies
 --------------------
@@ -68,7 +82,9 @@ Here is an example if all installed properly:
 
 Installation
 ------------
-There is only one binary executable to install, fusewos.  Recommend to copy it under directory /usr/local/bin.  Here is an example to do so:
+There is only one binary executable to install, fusewos.  You can pull it from the latest sub directory in releases directory.  
+
+Recommend to copy it under directory /usr/local/bin.  Here is an example to do so:
 
     cp /root/downloads/fusewos /usr/local/bin
 
@@ -115,7 +131,7 @@ Here is an example:
 
 Once the copy is done, file "services" will show up in both directory /mnt/fusewos and /gpfs0/fusewos.  The difference is:
 
-- when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
+- when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services.  This indicates the file body of "services" is read back intact from WOS cluster.
 
 - when you read back the file from directory /gpfs0/fusewos, you will get the stub file content, similar to the following:
 
