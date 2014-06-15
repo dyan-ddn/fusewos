@@ -35,21 +35,13 @@ Here is an example that shows both woslib and fuse libraries are missing in the 
     [root@localhost cpp]# ldd fusewos
 
         linux-vdso.so.1 =>  (0x00007fffda5ff000)
-
         libwos_cpp.so => not found
-
         libfuse.so.2 => not found
-
         libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00007ffdea545000)
-
         libm.so.6 => /lib64/libm.so.6 (0x00007ffdea2c1000)
-
         libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007ffdea0aa000)
-
         libc.so.6 => /lib64/libc.so.6 (0x00007ffde9d16000)
-
         libpthread.so.0 => /lib64/libpthread.so.0 (0x00007ffde9af9000)
-
         /lib64/ld-linux-x86-64.so.2 (0x00007ffdea856000)
 
 
