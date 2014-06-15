@@ -93,7 +93,8 @@ This directory will hold all the stub file file system structure.  Here is an ex
 
 Run the following command to get the fusewos file system mounted:
 
-    fusewos mountpoint -l <local fs stub file directory> -w <WOS Cluster IP address> -p <WOS Policy> -m WOSWOS -s -f -o big_writes &
+    fusewos mountpoint -l <local fs stub file directory> -w <WOS Cluster IP address> -p <WOS Policy> \
+            -m WOSWOS -s -f -o big_writes &
 
 Note:
 
