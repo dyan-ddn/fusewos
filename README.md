@@ -100,7 +100,7 @@ Note:
    - FUSE option "-s -f -o big_writes" are mandatory
    - "&" at the end of line is recommended to put it in back ground
    - The other options are self explained
-   - may see message "fuse: warning: library too old, some operations may not not work" pops up.  It's due to the FUSE library is odler than the one with which the fusewos binary was compiled, which is version 2.9.3, the newest as of June, 2014.  It's likely going to be running fine as the FUSE API used by fusewos is backward compatible at least with version 2.8.3.
+   - may see message "fuse: warning: library too old, some operations may not not work" pops up.  It's due to the FUSE library is older than the one with which the fusewos binary was linked in build time, which is version 2.9.3, the newest as of June, 2014.  It's likely going to be running fine as the FUSE API used by fusewos is backward compatible at least with version 2.8.3.
 
 Here is an example to run the command:
 
