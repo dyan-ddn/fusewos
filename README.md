@@ -24,7 +24,7 @@ Runtime Dependencies
 
 fusewos is initially developed and tested on CentOS 6.4 64-bit platform.  It should be quite trivial to make it work in other distributions as well.  
 
-The following contents in this readme assume CentOS 6.4 64-bit is the host operating system.
+The following contents in this readme assume CentOS 6.4 64-bit is the host operating system.  You can download the mini install ISO from here: http://mirror.symnds.com/distributions/CentOS-vault/6.4/isos/x86_64/CentOS-6.4-x86_64-minimal.iso
 
 
 **2. C++ WOSLib 2.x**
