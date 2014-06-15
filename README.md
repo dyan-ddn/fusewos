@@ -115,13 +115,9 @@ Here is an example:
 
 Once the copy is done, file "services" will show up in both directory /mnt/fusewos and /gpfs0/fusewos.  The difference is:
 
-* when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
+- when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
 
-* when you read back the file from directory /gpfs0/fusewos, you will get the stub file content, similar to the following:
-
-
-    [root@localhost wosfs]# cat /gpfs0/fusewos/services
-    WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
+- when you read back the file from directory /gpfs0/fusewos, you will get the stub file content, similar to the following:
 
 Colume 1: magic word "WOSWOS" specified in the command line
 
@@ -135,6 +131,8 @@ Column 5: WOS Cluster IP address
 
 Column 6: WOS policy used to store this file/object
 
+    [root@localhost wosfs]# cat /gpfs0/fusewos/services
+    WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
 
 
 
