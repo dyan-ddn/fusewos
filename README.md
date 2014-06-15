@@ -17,7 +17,7 @@ The following contents in this readme assume CentOS 6.4 64-bit is the host opera
 
 C++ WOSLib shared library can be found in the WOS C++ Dev Kit which can be downloaded from WOS cluster admin WebGUI.  fusewos was tested with WOSLib version 2.2.2, but other versions shall work too.
 
-Download, find and copy the C++ WOSLib shared library to /usr/lib64 directory.  Here is an example to do so:
+Download the C++ Dev Kit, find and copy the C++ WOSLib shared library to /usr/lib64 directory.  Here is an example to do so:
 
     cp -a /root/downloads/dist/lib64/libwos_cpp.so* /usr/lib64
 
