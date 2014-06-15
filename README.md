@@ -31,7 +31,7 @@ Fuse library is needed for fusewos to run.  It can be installed in CentOS 6.4 wi
 The FUSE library will be installed in directory /lib64 by yum.
 
 
-**4. Test if Needed Libraries are installed**
+**4. Test if Needed Libraries are Installed**
 
 Run the following command to see if the needed shared libraries are installed in the OS:
 ldd /path/to/the/fusewos
