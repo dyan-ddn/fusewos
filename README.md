@@ -82,14 +82,14 @@ Here is an example to do so:
     mkdir /mnt/fusewos
 
 
-**2 Create a directory in host file system tree to map it with the mount point**
+**2. Create a directory in host file system tree to map it with the mount point**
 
 This directory will hold all the stub file file system structure.  Here is an exmaple to do so:
 
     mkdir /gpfs0/fusewos
 
 
-**3 Mount the file system**
+**3. Mount the file system**
 
 Run the following command to get the fusewos file system mounted:
 
@@ -106,7 +106,7 @@ Here is an example to run the command:
 
     fusewos /mnt/fusewos -l /gpfs0/fusewos/ -w 10.44.34.73 -p default -m WOSWOS -s -f -o big_writes &
 
-**4 Copy a file to the mount point**
+**4. Copy a file to the mount point**
 
 Here is an example:
 
