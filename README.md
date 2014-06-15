@@ -39,7 +39,7 @@ Run the following command to see if the needed shared libraries are installed in
 
 Here is an example that shows both woslib and fuse libraries are missing in the shared library searching paths:
 
-    [root@localhost cpp]# ldd fusewos
+    [root@localhost cpp]# ldd /usr/local/bin/fusewos
         linux-vdso.so.1 =>  (0x00007fffda5ff000)
         libwos_cpp.so => not found
         libfuse.so.2 => not found
