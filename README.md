@@ -5,6 +5,8 @@ A Linux FUSE based file system layer for DDN's WOS object storage (ddn.com).
 
 fusewos stores a file's data body in WOS storage cluster, but leaves a stub file with meta data in the local directory tree.  WOS storage cluster is transparent to file system applications.
 
+fusewos seperates file system meta data from file body.  It is especially good for big data use cases.  This opens the door to optimize file IO by taking advantage of storage methods that are tuned for small data IO and big data IO.
+
 fusewos can work on top of local, clustered or network file systems, thanks to FUSE.
 
 fusewos comes with build-in file versioning.
