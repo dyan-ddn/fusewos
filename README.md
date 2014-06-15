@@ -3,7 +3,7 @@ fusewos
 
 A Linux FUSE based file system layer for DDN's WOS object storage (ddn.com).  
 
-fusewos stores the a file's data body in WOS storage cluster, but leaves a stub file with meta data in the local directory tree.  WOS storage cluster is transparent to file system applications.
+fusewos stores a file's data body in WOS storage cluster, but leaves a stub file with meta data in the local directory tree.  WOS storage cluster is transparent to file system applications.
 
 fusewos can work on top of local, clustered or network file systems, thanks to FUSE.
 
@@ -11,7 +11,7 @@ fusewos comes with build-in file versioning.
 
 fusewos supports an optoin for directory tree backup.
 
-fusewos uses 1 inode for each file in most cases, which means for ext4 file system, that's 4KB disk usage per file by default.  1 4TB disk can store 1 Billion files.  1KB is most likely enough for fusewos though.
+fusewos uses one inode for each file in most cases, which means for ext4 file system, that's 4KB disk usage per file by default.  One 4TB disk can store 1 Billion files.  1KB is most likely enough for fusewos though.
 
 All conventional tools can be used with the meta data directory for searching, examination, backup, sync, and etc.
 
