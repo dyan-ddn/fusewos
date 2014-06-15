@@ -6,11 +6,13 @@ A Linux FUSE based file system layer for DDN's WOS object storage (ddn.com).
 Runtime Dependencies
 --------------------
 1. Operating System
+
 fusewos is initially developed and tested on CentOS 6.4 64-bit platform.  It should be quite trivial to make it work in other distributions as well.  
 
 The following contents in this readme assume CentOS 6.4 64-bit is the host operating system.
 
 2. C++ WOSLib 2.x
+
 C++ WOSLib shared library can be found in the WOS C++ Dev Kit which can be downloaded from WOS cluster admin WebGUI.  fusewos was tested with WOSLib version 2.2.2, but other versions shall work too.
 
 Download, find and copy the C++ WOSLib shared library to /usr/lib64 directory.  Here is an example to do so:
@@ -19,9 +21,11 @@ cp -a /root/downloads/dist/lib64/libwos_cpp.so* /usr/lib64
 "
 
 3. FUSE Library
+
 Fuse library is needed for fusewos to run.  It can be installed in CentOS 6.4 with "yum install -y fuse-libs".  The FUSE library will be installed in directory /lib64 by yum.
 
 4. Test if Needed Libraries are installed
+
 Run the following command to see if the needed shared libraries are installed in the OS:
 ldd /path/to/the/fusewos
 
@@ -49,18 +53,21 @@ cp /root/downloads/fusewos /usr/local/bin
 Test Run
 --------
 1. Create a mount point for fusewos to mount the name space under it
+
 Here is an example to do so:
 "
 mkdir /mnt/fusewos
 "
 
 2. Create a directory in host file system tree to map it with the mount point
+
 This directory will hold all the stub file file system structure.  Here is an exmaple to do so:
 "
 mkdir /gpfs0/fusewos
 "
 
 3. Mount the file system
+
 Run the following command to get the fusewos file system mounted:
 fusewos mountpoint -l <local fs stub file directory> -w <WOS Cluster IP address> -p <WOS Policy> -m WOSWOS -s -f -o big_writes &
 
@@ -76,6 +83,7 @@ fusewos /mnt/fusewos -l /gpfs0/fusewos/ -w 10.44.34.73 -p default -m WOSWOS -s -
 "
 
 4. Copy a file to the mount point
+
 Here is an example:
 "
 cp /etc/services /mnt/fusewos
