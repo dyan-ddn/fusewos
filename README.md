@@ -33,7 +33,6 @@ ldd /path/to/the/fusewos
 Here is an example that shows both woslib and fuse libraries are missing in the shared library searching paths:
 
     [root@localhost cpp]# ldd fusewos
-
         linux-vdso.so.1 =>  (0x00007fffda5ff000)
         libwos_cpp.so => not found
         libfuse.so.2 => not found
@@ -49,70 +48,55 @@ Installation
 ------------
 There is only one binary executable to install, fusewos.  Recommend to copy it under directory /usr/local/bin.  Here is an example to do so:
 
-"
-cp /root/downloads/fusewos /usr/local/bin
-"
+    cp /root/downloads/fusewos /usr/local/bin
+
 
 Test Run
 --------
-1. Create a mount point for fusewos to mount the name space under it
+1 Create a mount point for fusewos to mount the name space under it
 
 Here is an example to do so:
 
-"
-mkdir /mnt/fusewos
-"
+    mkdir /mnt/fusewos
 
-Create a directory in host file system tree to map it with the mount point
+2 Create a directory in host file system tree to map it with the mount point
 
 This directory will hold all the stub file file system structure.  Here is an exmaple to do so:
 
-"
-mkdir /gpfs0/fusewos
-"
+    mkdir /gpfs0/fusewos
 
-2. Mount the file system
+3 Mount the file system
 
 Run the following command to get the fusewos file system mounted:
 
-fusewos mountpoint -l <local fs stub file directory> -w <WOS Cluster IP address> -p <WOS Policy> -m WOSWOS -s -f -o big_writes &
+    fusewos mountpoint -l <local fs stub file directory> -w <WOS Cluster IP address> -p <WOS Policy> -m WOSWOS -s -f -o big_writes &
 
 Note:
 
    - FUSE option "-s -f -o big_writes" are mandatory
-
    - "&" at the end of line is recommended to put it in back ground
-
    - The other options are self explained
-
    - may see message "fuse: warning: library too old, some operations may not not work" pop up.  It's likely going to be running fine, though the binary was compiled with FUSE shared library version 2.9.3, which is newest as of June, 2014.
 
 Here is an example to run the command:
 
-"
-fusewos /mnt/fusewos -l /gpfs0/fusewos/ -w 10.44.34.73 -p default -m WOSWOS -s -f -o big_writes &
-"
+    fusewos /mnt/fusewos -l /gpfs0/fusewos/ -w 10.44.34.73 -p default -m WOSWOS -s -f -o big_writes &
 
-Copy a file to the mount point
+4 Copy a file to the mount point
 
 Here is an example:
-"
-cp /etc/services /mnt/fusewos
-"
+
+    cp /etc/services /mnt/fusewos
 
 Once the copy is done, file "services" will both show up in directory /mnt/fusewos and /gpfs0/fusewos.  The difference is:
 
-1. when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
+* when you read back the file from directory /mnt/fusewos, you will get the file content, which is the same as original file at /etc/services
 
-2. when you read back the file from directory /gpfs0/fusewos, you will get the stub file content, similar to the following:
+* when you read back the file from directory /gpfs0/fusewos, you will get the stub file content, similar to the following:
 
-"
+    [root@localhost wosfs]# cat /gpfs0/fusewos/services 
 
-[root@localhost wosfs]# cat /gpfs0/fusewos/services 
-
-WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
-
-"
+    WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
 
 Colume 1: magic word "WOSWOS" specified in the command line.  Not used today.
 
