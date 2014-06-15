@@ -50,6 +50,21 @@ Here is an example that shows both woslib and fuse libraries are missing in the 
         libpthread.so.0 => /lib64/libpthread.so.0 (0x00007ffde9af9000)
         /lib64/ld-linux-x86-64.so.2 (0x00007ffdea856000)
 
+Here is an example if all installed properly:
+
+    [root@localhost wosfs]# ldd /usr/local/bin/fusewos
+        linux-vdso.so.1 =>  (0x00007fffe8f3e000)
+        libwos_cpp.so => /usr/lib64/libwos_cpp.so (0x00007fddf5989000)
+        libfuse.so.2 => /lib64/libfuse.so.2 (0x00007fddf5753000)
+        libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00007fddf544c000)
+        libm.so.6 => /lib64/libm.so.6 (0x00007fddf51c8000)
+        libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007fddf4fb2000)
+        libc.so.6 => /lib64/libc.so.6 (0x00007fddf4c1d000)
+        libpthread.so.0 => /lib64/libpthread.so.0 (0x00007fddf4a00000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007fddf5dfc000)
+        librt.so.1 => /lib64/librt.so.1 (0x00007fddf47f8000)
+        libdl.so.2 => /lib64/libdl.so.2 (0x00007fddf45f3000)
+
 
 Installation
 ------------
