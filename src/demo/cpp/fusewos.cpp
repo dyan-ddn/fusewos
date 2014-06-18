@@ -100,19 +100,20 @@ BlockWOSClient wos_b;
 typedef struct { //type union can not be used with WosPutStreamPtr and etc
 	WosPutStreamPtr ps;
 	WosGetStreamPtr gs;
-	WosObjPtr w;
- 	uint64_t put_bytes;
-	uint64_t get_bytes;;	
+	WosObjPtr 	w;
+ 	uint64_t 	put_bytes;
+	uint64_t 	get_bytes;;	
 } WosPtr_t;
 
 #define WOS_READ	1
 #define WOS_WRITE	2
 struct wosclient_pool_entry {
-	int type;
-	uint64_t len;
-	WosPtr_t WosPtr;
-	const char *path;
-	struct wosclient_pool_entry *next;
+	int 				type;
+	uint64_t 			len;
+	WosPtr_t 			WosPtr;
+	const char 			*path;
+	int				open_count;	
+	struct wosclient_pool_entry 	*next;
 } *wosclient_pool_head, *wosclient_pool_curr;
 int wosclient_pool_count =0;
 int wosclient_pool_empty_count = 0;
@@ -122,6 +123,10 @@ struct wosobj_info {
 	char oid[41];
 	uint64_t obj_len;
 	time_t sec;		
+};
+
+struct wosfs_open_handle {
+	int open_counts;
 };
 
 #define WOSFS_VERSION "0.2.2"
@@ -165,6 +170,7 @@ enum {
 
 #define WOSFS_LOG_ERRORS	0x01  // bitmask for error output
 #define WOSFS_LOG_FILEOP	0x02  // bitmask for fileop debug output
+#define WOSFS_LOG_WARN		0x04  // bitmask for warning debug output
 static struct fuse_opt wosfs_opts[] = {
      WOSFS_OPT("-m %s",             wosfs_magic, 0),
      WOSFS_OPT("-l %s",		    wosfs_path, 0),
@@ -513,6 +519,8 @@ static int wosfs_getattr(const char *path, struct stat *stbuf)
 	}
 
         if (S_ISREG(stbuf->st_mode)) {
+		WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path2=%s, size=%d, res=%d", path2, stbuf->st_size, res);
+
                 struct wosobj_info wosobj_info;
                 memset(&wosobj_info, 0, sizeof(struct wosobj_info));
                 if ( wosobj_info_last(path2, &wosobj_info) == true )
@@ -879,12 +887,21 @@ static int wosfs_open(const char *path, struct fuse_file_info *fi)
         WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
         wosfs_fix_path(path, path2);
 
-        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: IN : path=%s", path);
-        res = open(path2, fi->flags);
-        if (res == -1)
-                return -errno;
+        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: path=%s, path2=%s", path, path2);
 
-        close(res);
+        struct wosclient_pool_entry *wosclient = NULL;
+        wosclient = wosclient_pool_search_in_list_by_path(path2, NULL);
+        if ( NULL != wosclient )        {
+		wosclient->open_count++;
+        	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: path=%s, path2=%s, open_count=%d", path, path2, wosclient->open_count);
+	}
+	else {
+        	res = open(path2, fi->flags);
+        	if (res == -1)
+                	return -errno;
+
+        	close(res);
+	}
 
         return 0;
 }
@@ -996,9 +1013,11 @@ static int wosfs_read(const char *path1, char *buf, size_t size, off_t offset,
 static int wosfs_write(const char *path1, const char *buf, size_t size,
 		     off_t offset, struct fuse_file_info *fi)
 {
+
 	int res = -ENOENT;
 	char *path= (char *)path1;
 
+        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s, offset = %u, size = %u", path, offset, size);
 
         struct stat stbuf;
 
@@ -1006,7 +1025,6 @@ static int wosfs_write(const char *path1, const char *buf, size_t size,
         memset((void *)&path2, 0, 256);
 
         wosfs_fix_path(path, path2);
-        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path2=%s", path2);
 
 	path = path2;
 
@@ -1088,7 +1106,6 @@ static int wosfs_release(const char *path1, struct fuse_file_info *fi)
         char path2[256];
         memset((void *)&path2, 0, 256);
 
-        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
         wosfs_fix_path(path, path2);
 	
 	path = path2;
@@ -1104,14 +1121,21 @@ static int wosfs_release(const char *path1, struct fuse_file_info *fi)
         wosclient = wosclient_pool_search_in_list_by_path(path, NULL);
         if ( NULL == wosclient )        {
 		//pthread_mutex_unlock(&lock_release);
-                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : no active wosclient found, path=%s", path);
+                WOSFS_DEBUGLOG(WOSFS_LOG_WARN, ":WOS:: OUT : no active wosclient found, path=%s", path);
                 return res;
         }
+
+	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: active wosclient exists : path=%s, open_count=%d, type=%d", path, wosclient->open_count, wosclient->type);
+
+	if ( wosclient->open_count != 0 ) {
+		wosclient->open_count--;
+		return res;
+	}
 
 	if ( wosclient->type == WOS_READ ) {
 		wosclient_pool_delete_from_list(path);
 		//pthread_mutex_unlock(&lock_release);
-                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : called with active WOS_READ stream?! path=%s", path);
+                WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: OUT : called with active WOS_READ stream?! path=%s", path);
 		return res;
 	}
 
@@ -1182,6 +1206,21 @@ static int wosfs_fsync(const char *path, int isdatasync,
 	int res = -ENOENT;
 
         WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
+
+#if 0
+        char path2[256];
+        memset((void *)&path2, 0, 256);
+
+        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
+        wosfs_fix_path(path, path2); 
+
+        struct wosclient_pool_entry *wosclient = NULL;
+        wosclient = wosclient_pool_search_in_list_by_path(path2, NULL);
+        if ( NULL != wosclient )        {
+                wosclient->open_count++;
+        	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, open_count=%d", path, wosclient->open_count);
+        }
+#endif
 
 	/* Just a stub.	 This method is optional and can safely be left
 	   unimplemented */
