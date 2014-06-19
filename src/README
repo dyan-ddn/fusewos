@@ -26,7 +26,8 @@ It's very similar to the directory layout of C++ WOSLib SDK Kit.
 
 What's missing in the directory tree are the header files and C++ library files from the SDK kit.
 You can download the SDK kit from WOS Core cluster webGUI and put those missing files in the correspondant place.
-To be more specific, here are the list files to pull from the C++ WOSLib SDK kit:
+To be more specific, here is the list of files to pull from the C++ WOSLib SDK kit:
+
 ├── include
 ...
 │   ├── wos_cluster.hpp
