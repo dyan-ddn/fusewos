@@ -837,26 +837,28 @@ static int wosfs_truncate(const char *path, off_t size)
 
         WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
 
-      	if (strncmp (path, wosfs_conf.wosfs_path, strlen(wosfs_conf.wosfs_path)) == 0) {
+        char path2[256];
+        memset((void *)&path2, 0, 256);
+
+        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
+        wosfs_fix_path(path, path2);
 
         struct stat stbuf;
 
-        res = lstat(path, &stbuf);
+        res = lstat(path2, &stbuf);
         if (res == -1)
                 return -errno;
 
-      	if (strncmp (path, wosfs_conf.wosfs_path, strlen(wosfs_conf.wosfs_path)) == 0) {
+      	if (strncmp (path2, wosfs_conf.wosfs_path, strlen(wosfs_conf.wosfs_path)) == 0) {
 		/* let us to trucate the file if needed */
                 return 0;
         }
 
-	res = truncate(path, size);
+	res = truncate(path2, size);
 	if (res == -1)
 		return -errno;
 
 	return 0;
-	}
-	return res;
 }
 
 static int wosfs_utimens(const char *path, const struct timespec ts[2])
