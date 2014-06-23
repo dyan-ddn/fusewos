@@ -105,14 +105,22 @@ typedef struct { //type union can not be used with WosPutStreamPtr and etc
 	uint64_t 	get_bytes;;	
 } WosPtr_t;
 
-#define WOS_READ	1
-#define WOS_WRITE	2
+#define WOS_READ		1
+#define WOS_WRITE		2
+#define WOSFS_PERF_FIX_01 	1
+#define WOSFS_1MB		1000*1000
+#define WOSFS_1MiB		1024*1240
 struct wosclient_pool_entry {
 	int 				type;
 	uint64_t 			len;
 	WosPtr_t 			WosPtr;
 	const char 			*path;
 	int				open_count;	
+#ifdef WOSFS_PERF_FIX_01 
+	unsigned char			*buffer;
+	unsigned char			*b_ptr;
+	uint64_t			offset;
+#endif
 	struct wosclient_pool_entry 	*next;
 } *wosclient_pool_head, *wosclient_pool_curr;
 int wosclient_pool_count =0;
@@ -129,7 +137,7 @@ struct wosfs_open_handle {
 	int open_counts;
 };
 
-#define WOSFS_VERSION "0.2.2"
+#define WOSFS_VERSION "0.3.1"
 #define WOS_MAGIC "DDNWOS"
 #define WOS_DEFAULT_PATH "/wosfs/"
 #define WOS_DEFAULT_IP "10.44.34.73"
@@ -159,7 +167,8 @@ struct wosfs_config {
      char *wos_ip;
      char *wos_policy;
      int   wosfs_debug;
-} wosfs_conf;;
+     int   wosfs_buffer;
+} wosfs_conf;
 
 enum {
      KEY_HELP,
@@ -171,13 +180,15 @@ enum {
 #define WOSFS_LOG_ERRORS	0x01  // bitmask for error output
 #define WOSFS_LOG_FILEOP	0x02  // bitmask for fileop debug output
 #define WOSFS_LOG_WARN		0x04  // bitmask for warning debug output
+#define WOSFS_WR_DROP		0x08  // bitmask for dropping write data
 static struct fuse_opt wosfs_opts[] = {
      WOSFS_OPT("-m %s",             wosfs_magic, 0),
      WOSFS_OPT("-l %s",		    wosfs_path, 0),
      WOSFS_OPT("-b %s",       	    wosfs_bak_path, 0),
      WOSFS_OPT("-w %s",       	    wos_ip, 0),
      WOSFS_OPT("-p %s",       	    wos_policy, 0),
-     WOSFS_OPT("--wosdebug=%i",     wosfs_debug, 0),
+     WOSFS_OPT("--wos_debug=%i",     wosfs_debug, 0),
+     WOSFS_OPT("--wos_buffer=%i",     wosfs_buffer, 0),
 
      FUSE_OPT_KEY("-V",             KEY_VERSION),
      FUSE_OPT_KEY("--version",      KEY_VERSION),
@@ -257,8 +268,21 @@ struct wosclient_pool_entry* wosclient_pool_create_list(const char *path, WosPtr
         WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to allocate memory for ptr->path");
         return NULL;
     }
+    memset((void *)ptr->path, 0, strlen(path)+1);
     strcpy((char *)ptr->path, path);
     ptr->next = NULL;
+
+#ifdef WOSFS_PERF_FIX_01
+    if ( 0 != wosfs_conf.wosfs_buffer) {
+    	ptr->buffer = (unsigned char *)malloc(wosfs_conf.wosfs_buffer);
+    	if ( NULL == ptr->buffer ) {
+        	WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to allocate memory for ptr->buffer");
+        	return NULL;
+    	}
+    	memset((void *)ptr->buffer, 0, wosfs_conf.wosfs_buffer);
+   	 ptr->b_ptr = ptr->buffer;
+    }
+#endif
 
     wosclient_pool_head = wosclient_pool_curr = ptr;
     WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: OUT: wosclient_pool_empty_count=%d", wosclient_pool_empty_count);
@@ -294,6 +318,7 @@ struct wosclient_pool_entry* wosclient_pool_add_to_list(const char *path, WosPtr
 	pthread_mutex_unlock(&lock);
 	return NULL;
     }
+    memset((void *)ptr->path, 0, strlen(path)+1);
     strcpy((char *)ptr->path, path);
     ptr->next = NULL;
 
@@ -378,7 +403,12 @@ int wosclient_pool_delete_from_list(const char *path)
     }
 
     free((void *)del->path);
+#ifdef WOSFS_PERF_FIX_01
+    if ( 0 != wosfs_conf.wosfs_buffer) 
+    	free(del->buffer);
+#endif
     free(del);
+
     del = NULL;
     wosclient_pool_count--;
 
@@ -1040,41 +1070,72 @@ static int wosfs_write(const char *path1, const char *buf, size_t size,
 	if (S_ISREG(stbuf.st_mode)) {
         struct wosclient_pool_entry *wosclient = NULL; 
 
-        wosclient = wosclient_pool_search_in_list_by_path(path, NULL);
-        if ( NULL == wosclient )        {
-		if ( offset != 0 ) {
-			WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS::  not writing from BOF: path=%s, offset=%u, size=%u", path, offset, size);
+        	wosclient = wosclient_pool_search_in_list_by_path(path, NULL);
+        	if ( NULL == wosclient )        {
+			if ( offset != 0 ) {
+				WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS::  not writing from BOF: path=%s, offset=%u, size=%u", path, offset, size);
+				//pthread_mutex_unlock(&lock_write);
+				return -errno;
+			}
+
+                	WosPtr_t WosPtr;
+                	WosPtr.put_bytes = 0;
+			WosPtr.get_bytes = 0;
+			WosPolicy policy = wos_b.wos->GetPolicy(wosfs_conf.wos_policy);
+
+			if ( 0 == (wosfs_conf.wosfs_debug & WOSFS_WR_DROP ) ) {
+                		try {  
+                			WosPtr.ps = wos_b.wos->CreatePutStream(policy);
+                		}
+                		catch (WosE_InvalidPolicy& e) {
+                        		WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: path=%s, Invalid Policy: %s", path, wosfs_conf.wos_policy);
+					//pthread_mutex_unlock(&lock_write);
+                        		return -errno;
+                		}
+			}
+                	wosclient = wosclient_pool_add_to_list(path,WosPtr,true);
+			wosclient->type = WOS_WRITE;
+        	}
+
+		WosStatus rstatus;
+		if (wosfs_conf.wosfs_debug & WOSFS_WR_DROP ) {
+			rstatus = ok;
+		}
+		else {
+#ifdef WOSFS_PERF_FIX_01
+    		   if ( 0 != wosfs_conf.wosfs_buffer) {
+			int tmp_offset = wosclient->b_ptr - wosclient->buffer;	
+			int s = wosfs_conf.wosfs_buffer - tmp_offset;
+
+			if ( 0 == tmp_offset )
+				wosclient->offset = offset; 
+			if ( size > s ) { // assume size is always less than wosfs_conf.wosfs_buffer
+				memcpy(wosclient->b_ptr, buf, s);
+				wosclient->WosPtr.ps->PutSpan(rstatus, (char *)wosclient->buffer, wosclient->offset, wosfs_conf.wosfs_buffer);
+				wosclient->offset += wosfs_conf.wosfs_buffer;
+				wosclient->b_ptr = wosclient->buffer;
+				memcpy(wosclient->b_ptr, buf+ s, size - s);
+				wosclient->b_ptr += (size - s);
+			}
+			else {
+				WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: path=%s, wosclient->offset = %d", path, wosclient->offset);
+				memcpy(wosclient->b_ptr, buf, size);
+				wosclient->b_ptr += size;
+				rstatus = ok;
+			}
+		   }
+		   else
+			wosclient->WosPtr.ps->PutSpan(rstatus, (char *)buf, offset, size);
+#endif
+		}
+		if (rstatus != ok) {
+			WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS: path=%s, Error in PutSpan at offset = %u with size = %u", path, offset, size); 
 			//pthread_mutex_unlock(&lock_write);
 			return -errno;
 		}
-
-                WosPtr_t WosPtr;
-                WosPtr.put_bytes = 0;
-		WosPtr.get_bytes = 0;
-		WosPolicy policy = wos_b.wos->GetPolicy(wosfs_conf.wos_policy);
-
-                try {  
-                	WosPtr.ps = wos_b.wos->CreatePutStream(policy);
-                }
-                catch (WosE_InvalidPolicy& e) {
-                        WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: path=%s, Invalid Policy: %s", path, wosfs_conf.wos_policy);
-			//pthread_mutex_unlock(&lock_write);
-                        return -errno;
-                }
-                wosclient = wosclient_pool_add_to_list(path,WosPtr,true);
-		wosclient->type = WOS_WRITE;
-        }
-
-	WosStatus rstatus;
-	wosclient->WosPtr.ps->PutSpan(rstatus, (char *)buf, offset, size);
-	if (rstatus != ok) {
-		WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS: path=%s, Error in PutSpan at offset = %u with size = %u", path, offset, size); 
-		//pthread_mutex_unlock(&lock_write);
-		return -errno;
-	}
-	wosclient->WosPtr.put_bytes += size;
-	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: OUT: path=%s, offset = %u, size = %u, put_bytes= %u", path, offset, size, wosclient->WosPtr.put_bytes); 
-	res=size;
+		wosclient->WosPtr.put_bytes += size;
+		WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: OUT: path=%s, offset = %u, size = %u, put_bytes= %u", path, offset, size, wosclient->WosPtr.put_bytes); 
+		res=size;
 	}
 
 	//pthread_mutex_unlock(&lock_write);
@@ -1153,11 +1214,26 @@ static int wosfs_release(const char *path1, struct fuse_file_info *fi)
 	uint64_t put_bytes = wosclient->WosPtr.put_bytes;
 	WosPutStreamPtr ps = wosclient->WosPtr.ps;
 
+#ifdef WOSFS_PERF_FIX_01
+    	if ( 0 != wosfs_conf.wosfs_buffer) {
+	   if ( wosclient->b_ptr != wosclient->buffer ) {
+		ps->PutSpan(rstatus, (char *)wosclient->buffer, wosclient->offset, wosclient->b_ptr - wosclient->buffer);	
+		if (rstatus != ok) {
+			WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : Error in writing last bytes via PutSteam");
+		}
+	   }
+	}
+#endif
 	wosclient_pool_delete_from_list(path);
-	ps->Close(rstatus, roid);
+
+        if ( wosfs_conf.wosfs_debug & WOSFS_WR_DROP ) { 
+		rstatus = ok;
+	}
+	else
+		ps->Close(rstatus, roid);
 
         if (rstatus != ok) {
-                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : Error in closing PutSteam %d");
+                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : Error in closing PutSteam");
 		//pthread_mutex_unlock(&lock_release);
 		return -errno;
         }
@@ -1396,10 +1472,15 @@ int main(int argc, char *argv[])
 	wosfs_conf.wos_ip= wos_default_ip;
 	wosfs_conf.wos_policy= wos_default_policy;
 	wosfs_conf.wosfs_debug = WOSFS_LOG_ERRORS;
+	wosfs_conf.wosfs_buffer = 0;
 
      	fuse_opt_parse(&args, &wosfs_conf, wosfs_opts, wosfs_opt_proc);
 
-	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_path=%s, wos_ip=%s, wos_policy=%s, wosfs_bak_path=%s", wosfs_conf.wosfs_path, wosfs_conf.wos_ip, wosfs_conf.wos_policy, wosfs_conf.wosfs_bak_path);
+	if ( 0 != wosfs_conf.wosfs_buffer ) 
+		if ( wosfs_conf.wosfs_buffer < WOSFS_1MB )
+			wosfs_conf.wosfs_buffer = WOSFS_1MB;
+
+	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_path=%s, wos_ip=%s, wos_policy=%s, wosfs_bak_path=%s, wosfs_debug=%d, wosfs_buffer=%d", wosfs_conf.wosfs_path, wosfs_conf.wos_ip, wosfs_conf.wos_policy, wosfs_conf.wosfs_bak_path, wosfs_conf.wosfs_debug, wosfs_conf.wosfs_buffer);
 
 	if (pthread_mutex_init(&lock, NULL) != 0)
     	{
