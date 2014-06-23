@@ -137,7 +137,7 @@ struct wosfs_open_handle {
 	int open_counts;
 };
 
-#define WOSFS_VERSION "0.3.1"
+#define WOSFS_VERSION "0.3.2"
 #define WOS_MAGIC "DDNWOS"
 #define WOS_DEFAULT_PATH "/wosfs/"
 #define WOS_DEFAULT_IP "10.44.34.73"
@@ -321,6 +321,18 @@ struct wosclient_pool_entry* wosclient_pool_add_to_list(const char *path, WosPtr
     memset((void *)ptr->path, 0, strlen(path)+1);
     strcpy((char *)ptr->path, path);
     ptr->next = NULL;
+
+#ifdef WOSFS_PERF_FIX_01
+    if ( 0 != wosfs_conf.wosfs_buffer) {
+        ptr->buffer = (unsigned char *)malloc(wosfs_conf.wosfs_buffer);
+        if ( NULL == ptr->buffer ) {
+                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to allocate memory for ptr->buffer");
+                return NULL;
+        }
+        memset((void *)ptr->buffer, 0, wosfs_conf.wosfs_buffer);
+         ptr->b_ptr = ptr->buffer;
+    }
+#endif
 
     if(add_to_end)
     {
@@ -1068,10 +1080,12 @@ static int wosfs_write(const char *path1, const char *buf, size_t size,
 
 	//pthread_mutex_lock(&lock_write);
 	if (S_ISREG(stbuf.st_mode)) {
-        struct wosclient_pool_entry *wosclient = NULL; 
+        	struct wosclient_pool_entry *wosclient = NULL; 
 
         	wosclient = wosclient_pool_search_in_list_by_path(path, NULL);
+		WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: Check 100");
         	if ( NULL == wosclient )        {
+			WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: Check 101");
 			if ( offset != 0 ) {
 				WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS::  not writing from BOF: path=%s, offset=%u, size=%u", path, offset, size);
 				//pthread_mutex_unlock(&lock_write);
@@ -1093,7 +1107,9 @@ static int wosfs_write(const char *path1, const char *buf, size_t size,
                         		return -errno;
                 		}
 			}
+			WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: Check 102");
                 	wosclient = wosclient_pool_add_to_list(path,WosPtr,true);
+			WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: Check 103");
 			wosclient->type = WOS_WRITE;
         	}
 
@@ -1107,6 +1123,7 @@ static int wosfs_write(const char *path1, const char *buf, size_t size,
 			int tmp_offset = wosclient->b_ptr - wosclient->buffer;	
 			int s = wosfs_conf.wosfs_buffer - tmp_offset;
 
+			WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: path=%s, wosclient->offset = %d, tmp_offset=%d, s=%d, wosclient->b_ptr=%p,wosclient->buffer=%p", path, wosclient->offset, tmp_offset, s, wosclient->b_ptr, wosclient->buffer);
 			if ( 0 == tmp_offset )
 				wosclient->offset = offset; 
 			if ( size > s ) { // assume size is always less than wosfs_conf.wosfs_buffer
@@ -1118,7 +1135,7 @@ static int wosfs_write(const char *path1, const char *buf, size_t size,
 				wosclient->b_ptr += (size - s);
 			}
 			else {
-				WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: path=%s, wosclient->offset = %d", path, wosclient->offset);
+				WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS: path=%s, wosclient->offset = %d, wosclient->b_ptr = %p", path, wosclient->offset, wosclient->b_ptr);
 				memcpy(wosclient->b_ptr, buf, size);
 				wosclient->b_ptr += size;
 				rstatus = ok;
