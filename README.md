@@ -123,7 +123,7 @@ Note:
 
 Here is an example to run the command:
 
-    fusewos /mnt/fusewos -l /gpfs0/fusewos/ -w 10.44.34.73 -p default -m WOSWOS -s -f -o big_writes &
+    fusewos /mnt/fusewos -l /gpfs0/fusewos/ -w 10.44.34.73 -p default -s -f -o big_writes &
 
 **4. Copy a file to the mount point**
 
