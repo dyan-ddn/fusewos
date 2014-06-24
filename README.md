@@ -182,7 +182,7 @@ Trash Can
 ---------
 When a file or directory is deleted in fusewos file system, a line of original stub file path is appended at the end of the stub file, and the stub file(s) are moved into a folder at /<fusewos mount point>/.WOSFS_TrashCan/.
 
-Here is an example of deleting a file in fusewos file system
+Here is an example of deleting a file in fusewos file system:
 
     [root@linux-client-01 tmp]# rm /mnt/fuse/services
     rm: remove regular file `/mnt/fuse/services'? y
