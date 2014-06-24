@@ -9,7 +9,11 @@ fusewos seperates file system meta data from file body.  It is especially good f
 
 fusewos can work on top of local, clustered or network file systems, thanks to FUSE.
 
-fusewos comes with build-in features like file versioning, trashcan and etc.
+fusewos supports file versioning.
+
+fusewos supports trash can per mount point.
+
+fusewos supports file system snapshots.
 
 fusewos supports an option for directory tree backup.
 
@@ -17,7 +21,6 @@ fusewos uses one inode for each file in most cases, which means for ext4 file sy
 
 All conventional tools can be used with the meta data directory for searching, examination, backup, sync, and etc.
 
-Snapshots are as easy as making a copy of the meta data directory.
 
 Runtime Dependencies
 --------------------
