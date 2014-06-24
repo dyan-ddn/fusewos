@@ -174,7 +174,7 @@ Here is an example:
                                                                |_______ time stamp: date -d @1403646917 to get
                                                                                     the human readable format
 
-When reading back the file within fusewos file system, the last line of the stub file is queried to get the file content from WOS core storage cluster.
+When reading back the file within fusewos file system, the last line with of the stub file fusewos magic word is queried to get the file content from WOS core storage cluster.
 
 If need to revert to an older version, just move the line correspondent to the version needed to the last line in the stub file.
 
