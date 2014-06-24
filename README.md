@@ -152,7 +152,45 @@ Column 6: WOS policy used to store this file/object
     [root@localhost wosfs]# cat /gpfs0/fusewos/services
     WOSWOS lBkHWZxhDPjKseBkA3lr93Sy-GFuGL5RZBXlE_TL 641020 1402858866 10.44.34.73 default
 
+File Versioning
+---------------
+When a file is re-written in fusewos file system, a new line of meta data is appended at the end of the stub file.
 
+Here is an example:
+
+    [root@linux-client-01 tmp]# cp /etc/services /mnt/fuse/
+    [root@linux-client-01 tmp]# cp /etc/services /mnt/fuse/
+    cp: overwrite `/mnt/fuse/services'? y
+    [root@linux-client-01 tmp]# cat /wosfs/
+    services         .WOSFS_TrashCan/ .WOS_snapshots/  
+    [root@linux-client-01 tmp]# cat /wosfs/services 
+    WOSWOS iDjAIhQmBk3PI0CyYKzab2NQcOfYb8HyAFhoJh-B 641020 1403646913 10.44.34.73 a_test01
+    WOSWOS kDlGQBRgBivvJyCXywVG90BtgOYAY2gAr0T2AFFB 641020 1403646917 10.44.34.73 a_test01
+                                                           ----------
+                                                               ^
+                                                               |_______ time stamp: date -d @1403646917 to get
+                                                                                    get human readable format
+
+When reading back the file within fusewos file system, the last line of the stub file is queried to get the file content from WOS core storage cluster.
+
+If need to revert to an older version, just move the line correspondent to the version needed to the last line in the stub file.
+
+Trash Can
+---------
+When a file or directory is deleted in fusewos file system, a line of original file path is appended at the end of the stub file, and the stub file(s) are moved into a folder at the /<mount point/.WOSFS_TrashCan/.
+
+Here is an example of deleting a file in fusewos file system
+
+    [root@linux-client-01 tmp]# rm /mnt/fuse/services
+    rm: remove regular file `/mnt/fuse/services'? y
+    [root@linux-client-01 tmp]# ls -l /mnt/fuse/.WOSFS_TrashCan/services.1403647595.551628711
+    -rw-r--r-- 1 root root 641020 Jun 24 15:06 /mnt/fuse/.WOSFS_TrashCan/services.1403647595.551628711
+    [root@linux-client-01 tmp]# cat /wosfs/.WOSFS_TrashCan/services.1403647595.551628711 
+    WOSWOS iDjAIhQmBk3PI0CyYKzab2NQcOfYb8HyAFhoJh-B 641020 1403646913 10.44.34.73 a_test01
+    WOSWOS kDlGQBRgBivvJyCXywVG90BtgOYAY2gAr0T2AFFB 641020 1403646917 10.44.34.73 a_test01
+    WOSFS original path: /wosfs/services
+
+If a file in trash can folder is deleted via fusewos file system mount point, all versions of the file as listed in the stub file are deleted from WOS core cluster.
 
 
 
