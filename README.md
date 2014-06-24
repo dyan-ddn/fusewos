@@ -169,7 +169,7 @@ Here is an example:
                                                            ----------
                                                                ^
                                                                |_______ time stamp: date -d @1403646917 to get
-                                                                                    get human readable format
+                                                                                    the human readable format
 
 When reading back the file within fusewos file system, the last line of the stub file is queried to get the file content from WOS core storage cluster.
 
