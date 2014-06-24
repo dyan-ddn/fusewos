@@ -15,7 +15,7 @@ fusewos supports trash can per mount point.
 
 fusewos supports file system snapshots.
 
-fusewos supports an option for directory tree backup.
+fusewos supports an option for directory tree backup, which can be a building block for active/passive or active/active redundant archive server setup.
 
 fusewos uses one inode for each file in most cases, which means for ext4 file system, that's 4KB disk usage per file by default.  One 4TB disk can store 1 Billion files.  1KB is most likely enough for fusewos though.  Easy disk usage calculation, no mystery here in sizing for storage needs.
 
