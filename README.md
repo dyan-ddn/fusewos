@@ -9,13 +9,15 @@ fusewos seperates file system meta data from file body.  It is especially good f
 
 fusewos can work on top of local, clustered or network file systems, thanks to FUSE.
 
-fusewos comes with build-in file versioning.
+fusewos comes with build-in features like file versioning, trashcan and etc.
 
 fusewos supports an option for directory tree backup.
 
 fusewos uses one inode for each file in most cases, which means for ext4 file system, that's 4KB disk usage per file by default.  One 4TB disk can store 1 Billion files.  1KB is most likely enough for fusewos though.  Easy disk usage calculation, no mystery here in sizing for storage needs.
 
 All conventional tools can be used with the meta data directory for searching, examination, backup, sync, and etc.
+
+Snapshots are as easy as making a copy of the meta data directory.
 
 Runtime Dependencies
 --------------------
