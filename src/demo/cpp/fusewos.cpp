@@ -9,7 +9,8 @@
   gcc -Wall fusexmp.c `pkg-config fuse --cflags --libs` -o fusexmp
 */
 
-#define FUSE_USE_VERSION 26
+#define FUSE_USE_VERSION 		26
+#define WOSFS_VERSION 			"0.4.1"
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -98,18 +99,29 @@ BlockWOSClient wos_b;
  **  struct wosclient_pool_entry and helpers 
  **/
 typedef struct { //type union can not be used with WosPutStreamPtr and etc
-	WosPutStreamPtr ps;
-	WosGetStreamPtr gs;
-	WosObjPtr 	w;
- 	uint64_t 	put_bytes;
-	uint64_t 	get_bytes;;	
+	WosPutStreamPtr 	ps;
+	WosGetStreamPtr 	gs;
+	WosObjPtr 		w;
+ 	uint64_t 		put_bytes;
+	uint64_t 		get_bytes;;	
 } WosPtr_t;
 
 #define WOS_READ		1
 #define WOS_WRITE		2
-#define WOSFS_PERF_FIX_01 	1
+
 #define WOSFS_1MB		1000*1000
 #define WOSFS_1MiB		1024*1240
+#define WOSFS_1KB		1000
+#define WOSFS_1KiB		1024
+
+#define WOSFS_PERF_FIX_01 	1
+#define WOSFS_FEATURE_TRASHCAN	1
+
+#ifdef WOSFS_FEATURE_TRASHCAN
+#define WOSFS_TRASHCAN_NAME	"/.WOSFS_TrashCan"
+char *wosfs_trashcan_path;
+#endif
+
 struct wosclient_pool_entry {
 	int 				type;
 	uint64_t 			len;
@@ -127,30 +139,27 @@ int wosclient_pool_count =0;
 int wosclient_pool_empty_count = 0;
 
 struct wosobj_info {
-	char magic[7];
-	char oid[41];
-	uint64_t obj_len;
-	time_t sec;		
+	char 				magic[7];
+	char 				oid[41];
+	uint64_t 			obj_len;
+	time_t 				sec;		
 };
 
-struct wosfs_open_handle {
-	int open_counts;
+struct wosobj_oid_list_entry {
+        char                            oid[41];
+	struct wosobj_oid_list_entry	*next;
 };
 
-#define WOSFS_VERSION "0.3.2"
-#define WOS_MAGIC "DDNWOS"
-#define WOS_DEFAULT_PATH "/wosfs/"
-#define WOS_DEFAULT_IP "10.44.34.73"
-#define WOS_DEFAULT_POLICY "test"
-#define WOSFS_PATH_FIX_01 0
+#define WOS_MAGIC 			"DDNWOS"
+#define WOS_DEFAULT_PATH 		"/wosfs/"
+#define WOS_DEFAULT_IP 			"10.44.34.73"
+#define WOS_DEFAULT_POLICY 		"test"
+#define WOSFS_PATH_FIX_01 		0
 
-char wos_fs_path[256];
-char wos_ip[256];
-char wos_policy[256];
-char wosfs_default_magic[]=WOS_MAGIC;
-char wosfs_default_path[]=WOS_DEFAULT_PATH;
-char wos_default_ip[]=WOS_DEFAULT_IP;
-char wos_default_policy[]=WOS_DEFAULT_POLICY;
+char wosfs_default_magic[]		= WOS_MAGIC;
+char wosfs_default_path[]		= WOS_DEFAULT_PATH;
+char wos_default_ip[]			= WOS_DEFAULT_IP;
+char wos_default_policy[]		= WOS_DEFAULT_POLICY;
 
 pthread_mutex_t lock;
 pthread_mutex_t lock2;
@@ -159,15 +168,14 @@ pthread_mutex_t lock_write;;
 pthread_mutex_t lock_read;;
 pthread_mutex_t lock_getattr;
 
-
 struct wosfs_config {
-     char *wosfs_magic;
-     char *wosfs_path;
-     char *wosfs_bak_path;
-     char *wos_ip;
-     char *wos_policy;
-     int   wosfs_debug;
-     int   wosfs_buffer;
+     char 	*wosfs_magic;
+     char 	*wosfs_path;
+     char 	*wosfs_bak_path;
+     char 	*wos_ip;
+     char 	*wos_policy;
+     int   	wosfs_debug;
+     int   	wosfs_buffer;
 } wosfs_conf;
 
 enum {
@@ -181,19 +189,20 @@ enum {
 #define WOSFS_LOG_FILEOP	0x02  // bitmask for fileop debug output
 #define WOSFS_LOG_WARN		0x04  // bitmask for warning debug output
 #define WOSFS_WR_DROP		0x08  // bitmask for dropping write data
-static struct fuse_opt wosfs_opts[] = {
-     WOSFS_OPT("-m %s",             wosfs_magic, 0),
-     WOSFS_OPT("-l %s",		    wosfs_path, 0),
-     WOSFS_OPT("-b %s",       	    wosfs_bak_path, 0),
-     WOSFS_OPT("-w %s",       	    wos_ip, 0),
-     WOSFS_OPT("-p %s",       	    wos_policy, 0),
-     WOSFS_OPT("--wos_debug=%i",     wosfs_debug, 0),
-     WOSFS_OPT("--wos_buffer=%i",     wosfs_buffer, 0),
 
-     FUSE_OPT_KEY("-V",             KEY_VERSION),
-     FUSE_OPT_KEY("--version",      KEY_VERSION),
-     FUSE_OPT_KEY("-h",             KEY_HELP),
-     FUSE_OPT_KEY("--help",         KEY_HELP),
+static struct fuse_opt wosfs_opts[] = {
+     WOSFS_OPT("-m %s",             	wosfs_magic, 0),
+     WOSFS_OPT("-l %s",		    	wosfs_path, 0),
+     WOSFS_OPT("-b %s",       	    	wosfs_bak_path, 0),
+     WOSFS_OPT("-w %s",       	    	wos_ip, 0),
+     WOSFS_OPT("-p %s",       	    	wos_policy, 0),
+     WOSFS_OPT("--wos_debug=%i",     	wosfs_debug, 0),
+     WOSFS_OPT("--wos_buffer=%i",     	wosfs_buffer, 0),
+
+     FUSE_OPT_KEY("-V",             	KEY_VERSION),
+     FUSE_OPT_KEY("--version",      	KEY_VERSION),
+     FUSE_OPT_KEY("-h",             	KEY_HELP),
+     FUSE_OPT_KEY("--help",         	KEY_HELP),
      FUSE_OPT_END
 };
 
@@ -217,6 +226,44 @@ bool test_wos_magic(FILE *fp)
 		return false;
 }
 
+bool wosobj_get_oid_list(const char *path, struct wosobj_oid_list_entry *wosobj_oids)
+{
+        bool res=false;
+        FILE *fp;
+        fp = fopen(path, "r+");
+
+        if ( NULL == fp) {
+                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to open file %s", path);
+                return res;
+        }
+
+        ssize_t read;
+        char *line = NULL;
+        size_t len = 0;
+	char magic[64];
+	wosobj_oid_list_entry *woid=wosobj_oids;
+        while ((read = getline(&line, &len, fp)) != -1) {
+                if ( strncmp(line, wosfs_conf.wosfs_magic, strlen(wosfs_conf.wosfs_magic)) == 0 ) {
+                	sscanf(line,  "%s %s", magic, woid->oid);
+                	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosobj_oids->oid=%s", woid->oid);
+			woid->next = (struct wosobj_oid_list_entry *)malloc(sizeof(struct wosobj_oid_list_entry));
+			if ( NULL == woid->next ) {
+				WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed allocate memory for woid->next");
+				return false;
+			}
+			else {
+				memset(woid->next, 0, sizeof(struct wosobj_oid_list_entry));
+				woid=woid->next;
+			}
+			res=true;
+                }
+                WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_magic=%s, line=%s", wosfs_conf.wosfs_magic, line);
+        }
+        fclose(fp);
+
+        return res;
+}
+
 bool wosobj_info_last(const char *path, struct wosobj_info *wosobj_info)
 {  
 	bool res=false; 
@@ -233,10 +280,12 @@ bool wosobj_info_last(const char *path, struct wosobj_info *wosobj_info)
 	char *lastline = NULL;
 	size_t len = 0;
 	while ((read = getline(&line, &len, fp)) != -1) {
-		lastline = line;
-		//printf("Retrieved line of length %zu :\n", read);
-		//printf("%s", lastline);
-		
+		if ( strncmp(line, wosfs_conf.wosfs_magic, strlen(wosfs_conf.wosfs_magic)) == 0 ) {
+			if (lastline) 
+				free(lastline);
+			lastline = strdup(line);
+		}
+		WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_magic=%s, line=%s, lastline=%s", wosfs_conf.wosfs_magic, line, lastline);
         }
 	if (lastline) {
 		sscanf(lastline,  "%s %s %lu", wosobj_info->magic, wosobj_info->oid, &wosobj_info->obj_len);
@@ -722,7 +771,7 @@ static int wosfs_unlink(const char *path)
 {
 	int res = -ENOENT;
 
-        char path2[256];
+        char path2[WOSFS_1KiB];
         memset((void *)&path2, 0, 256);
 
         WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
@@ -734,24 +783,79 @@ static int wosfs_unlink(const char *path)
         if (res == -1)
                 return -errno;
 
-        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s", path);
+        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: IN : path=%s, path2=%s", path, path2);
 
-        if (S_ISREG(stbuf.st_mode)) {
+        if (S_ISREG(stbuf.st_mode) && stbuf.st_nlink == 1) {
+#ifdef WOSFS_FEATURE_TRASHCAN
+		if ( strncmp( path2, wosfs_trashcan_path, strlen(wosfs_trashcan_path)) == 0 ) {
+ 			// find all OIDs in the stub file and delete them from WOS core, then delete the local stub file and return.	
+			struct wosobj_oid_list_entry *wosobj_oids = (wosobj_oid_list_entry *)malloc(sizeof(wosobj_oid_list_entry));;
+			memset(wosobj_oids, 0, sizeof(struct wosobj_oid_list_entry));
 
+			if ( true == wosobj_get_oid_list(path2, wosobj_oids) ) {
+				struct wosobj_oid_list_entry *woid = wosobj_oids;
+				do {
+					if ( woid->oid[0] != '\0'  ) {
+						WosStatus status;
+        			                WosOID oid(woid->oid);
+                        			WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, oid=%s", path2, oid.c_str());
+	                        		wos_b.wos->Delete(status, oid);
+                        			if (status != ok) {
+                                			WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to delete oid: %s,  delete status=%s", woid->oid, status.ErrMsg().c_str());
+                        			}
+					}
+					woid = woid->next;		
+					free(wosobj_oids); wosobj_oids=woid;
+				} while ( woid != NULL );	
+			}
+		}
+		else {
+                	
+			char *fname;
+			char *tmp = strdup(path2);
+			if ( NULL == tmp ) {
+				WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to allocate memory for tmp (path2)");
+				return -errno;
+			}
+			fname = basename(tmp);
+        		char trash_path[WOSFS_1KiB];
+
+			struct timespec tp;
+			clock_gettime(CLOCK_REALTIME, &tp);
+			sprintf( trash_path, "%s/%s.%lld.%lld", wosfs_trashcan_path, fname, tp.tv_sec, tp.tv_nsec);
+
+			WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path2=%s, trash_path=%s", path2, trash_path);	
+
+		        FILE * fp = fopen (path2, "a+");
+        		if ( NULL == fp ) {
+                		WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : failed to open file.  path=%s", path);
+                		return -errno;
+        		}
+
+        		fprintf(fp, "WOSFS original path: %s\n", path2);
+        		fclose(fp);
+
+			rename(path2, trash_path);
+			free(tmp);	
+
+			return 0;
+		}
+#else
                 struct wosobj_info wosobj_info;
                 memset(&wosobj_info, 0, sizeof(struct wosobj_info));
                 if ( wosobj_info_last(path2, &wosobj_info) == false) {
                         WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: failed to read from file: %s", path2);
                 }
-                else if ( stbuf.st_nlink == 1 ) {
+                else {
                         WosStatus status;
                         WosOID oid(wosobj_info.oid);
                         wos_b.wos->Delete(status, oid);
                         if (status != ok) {
-                                WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: WOS delete status=%s", status.ErrMsg().c_str());
+                                WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to delete oid: %s,  delete status=%s", wosobj_info.oid, status.ErrMsg().c_str());
                         }
                         WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, oid=%s", path2, wosobj_info.oid);
                 }
+#endif
         }
         res = unlink(path2);
         if (res == -1)
@@ -979,9 +1083,7 @@ static int wosfs_read(const char *path1, char *buf, size_t size, off_t offset,
 	//pthread_mutex_lock(&lock_read);
         struct wosclient_pool_entry *wosclient = NULL;
 
-        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, Check Point 1000", path);
         wosclient = wosclient_pool_search_in_list_by_path(path, NULL);
-        WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, Check Point 1001", path);
         if ( NULL == wosclient )        {
                 WosPtr_t WosPtr;
                 WosPtr.get_bytes=0;
@@ -989,7 +1091,6 @@ static int wosfs_read(const char *path1, char *buf, size_t size, off_t offset,
                 char oid_str[41];
                 struct wosobj_info wosobj_info;
                 memset(&wosobj_info, 0, sizeof(struct wosobj_info));
-        	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, Check Point 1002", path);
                 if ( wosobj_info_last(path, &wosobj_info) == false ) {
 			WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: OUT : can not read stub file: path=%s", path);
 			//pthread_mutex_unlock(&lock_read);
@@ -997,7 +1098,6 @@ static int wosfs_read(const char *path1, char *buf, size_t size, off_t offset,
 			return EAGAIN;
 		}
 
-        	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, Check Point 1003", path);
                 WosPtr.get_bytes = wosobj_info.obj_len;
 		WosPtr.put_bytes = 0;
 
@@ -1011,9 +1111,7 @@ static int wosfs_read(const char *path1, char *buf, size_t size, off_t offset,
 			//pthread_mutex_unlock(&lock_read);
                         return -errno;
                 }
-        	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, Check Point 1004", path);
                 wosclient = wosclient_pool_add_to_list(path,WosPtr,true);
-        	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: path=%s, Check Point 1005", path);
 		wosclient->type = WOS_READ;
 		wosclient->len = WosPtr.get_bytes;
 		
@@ -1497,7 +1595,24 @@ int main(int argc, char *argv[])
 		if ( wosfs_conf.wosfs_buffer < WOSFS_1MB )
 			wosfs_conf.wosfs_buffer = WOSFS_1MB;
 
-	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_path=%s, wos_ip=%s, wos_policy=%s, wosfs_bak_path=%s, wosfs_debug=%d, wosfs_buffer=%d", wosfs_conf.wosfs_path, wosfs_conf.wos_ip, wosfs_conf.wos_policy, wosfs_conf.wosfs_bak_path, wosfs_conf.wosfs_debug, wosfs_conf.wosfs_buffer);
+	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_magic=%s, wosfs_path=%s, wos_ip=%s, wos_policy=%s, wosfs_bak_path=%s, wosfs_debug=%d, wosfs_buffer=%d", wosfs_conf.wosfs_magic, wosfs_conf.wosfs_path, wosfs_conf.wos_ip, wosfs_conf.wos_policy, wosfs_conf.wosfs_bak_path, wosfs_conf.wosfs_debug, wosfs_conf.wosfs_buffer);
+
+#ifdef WOSFS_FEATURE_TRASHCAN
+	wosfs_trashcan_path = (char *)malloc(strlen(wosfs_conf.wosfs_path) + sizeof(WOSFS_TRASHCAN_NAME));	
+	if ( NULL == wosfs_trashcan_path ) {
+		WOSFS_DEBUGLOG(WOSFS_LOG_ERRORS, ":WOS:: failed to allocate memory for wosfs_trashcan_pat");
+		return 3;
+	}
+	strcpy(wosfs_trashcan_path, wosfs_conf.wosfs_path);
+	strcpy(wosfs_trashcan_path+strlen(wosfs_conf.wosfs_path), WOSFS_TRASHCAN_NAME);
+	struct stat st = {0};
+	if (stat(wosfs_trashcan_path, &st) == -1) {
+    		mkdir(wosfs_trashcan_path, 0700);
+	}
+	WOSFS_DEBUGLOG(WOSFS_LOG_FILEOP, ":WOS:: wosfs_trashcan_path=%s", wosfs_trashcan_path);
+
+#endif
+
 
 	if (pthread_mutex_init(&lock, NULL) != 0)
     	{
