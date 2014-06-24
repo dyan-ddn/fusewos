@@ -177,7 +177,7 @@ If need to revert to an older version, just move the line correspondent to the v
 
 Trash Can
 ---------
-When a file or directory is deleted in fusewos file system, a line of original file path is appended at the end of the stub file, and the stub file(s) are moved into a folder at the /<mount point/.WOSFS_TrashCan/.
+When a file or directory is deleted in fusewos file system, a line of original stub file path is appended at the end of the stub file, and the stub file(s) are moved into a folder at /<fusewos mount point>/.WOSFS_TrashCan/.
 
 Here is an example of deleting a file in fusewos file system
 
@@ -189,6 +189,8 @@ Here is an example of deleting a file in fusewos file system
     WOSWOS iDjAIhQmBk3PI0CyYKzab2NQcOfYb8HyAFhoJh-B 641020 1403646913 10.44.34.73 a_test01
     WOSWOS kDlGQBRgBivvJyCXywVG90BtgOYAY2gAr0T2AFFB 641020 1403646917 10.44.34.73 a_test01
     WOSFS original path: /wosfs/services
+
+If need to recover the file to old path or a different path, just move the stub file out of the trash can folder.
 
 If a file in trash can folder is deleted via fusewos file system mount point, all versions of the file as listed in the stub file are deleted from WOS core cluster.
 
