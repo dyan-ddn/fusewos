@@ -15,7 +15,7 @@ fusewos supports trash can per mount point.
 
 fusewos supports file system snapshots.
 
-fusewos supports multiple WOS polices
+fusewos supports multiple WOS polices at mount point or directory level
 
 fusewos supports an option for directory tree backup, which can be a building block for active/passive or active/active redundant archive server setup.
 
